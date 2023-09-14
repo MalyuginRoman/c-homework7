@@ -12,23 +12,21 @@ bool endStaticBlock(std::string text) // end static block
 }
 void PB(std::vector<std::string> vector, size_t count) // print block
 {
-    for(int i = 0; i < count; ++i)
+    for(size_t i = 0; i < count; ++i)
     {
         std::cout << vector[i];
         if (i < count - 1) std::cout << ", ";
     }
 }
 
-int main(int argc, char *argv[])
+int main(int , char **)
 {
-    QCoreApplication a(argc, argv);
-
     std::vector<std::string> commandVectorStatic;
     std::vector<std::string> commandVectorDynamic;
     std::string text;
     size_t count_st = 0;
     size_t count_dy = 0;
-    int max_size = 3;
+    size_t max_size = 3;
     int dynamicCount = 0;
     bool isActDyn = false;
     while (std::getline(std::cin, text))
@@ -81,7 +79,5 @@ int main(int argc, char *argv[])
         }
 
     }
-
-
-    return a.exec();
+    return 0;
 }
