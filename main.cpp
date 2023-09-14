@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include "lib.h"
@@ -10,74 +11,81 @@ bool endStaticBlock(std::string text) // end static block
     else
         return false;
 }
-void PB(std::vector<std::string> vector, size_t count) // print block
+void PrintBlock(std::vector<std::string> vector, size_t count)
 {
-    for(size_t i = 0; i < count; ++i)
+    for(int i = 0; i < count; ++i)
     {
         std::cout << vector[i];
         if (i < count - 1) std::cout << ", ";
     }
 }
 
-int main(int , char **)
-{
+struct Command {
     std::vector<std::string> commandVectorStatic;
     std::vector<std::string> commandVectorDynamic;
-    std::string text;
     size_t count_st = 0;
     size_t count_dy = 0;
-    size_t max_size = 3;
+    int max_size = 3;
     int dynamicCount = 0;
     bool isActDyn = false;
+};
+
+void RunBulk(Command &com, std::string text)
+{
+    if(!com.isActDyn)                                   // static block
+    {
+        if(!endStaticBlock(text))                   // text == "EOF" || text == "{"
+        {
+            com.commandVectorStatic.push_back(text);
+            com.count_st = com.commandVectorStatic.size();
+            if(com.count_st == com.max_size)
+            {
+                std::cout << "bulk: ";
+                PrintBlock(com.commandVectorStatic, com.count_st);
+                std::cout << std::endl;
+                com.commandVectorStatic.clear();
+            }
+        }
+        if(endStaticBlock(text))                    // text == "EOF" || text == "{"
+        {
+            com.count_st = com.commandVectorStatic.size();
+            std::cout << "bulk: ";
+            PrintBlock(com.commandVectorStatic, com.count_st);
+            std::cout << std::endl;
+            com.commandVectorStatic.clear();
+            if(text == "{")
+            {
+                com.isActDyn = true;
+                com.dynamicCount ++;
+            }
+        }
+    }
+    else                                            // dynamic block
+    {
+        if(text != "{" && text != "}")
+        {
+            com.commandVectorDynamic.push_back(text);
+        }
+        if(text == "{") com.dynamicCount ++;
+        if(text == "}") com.dynamicCount --;
+        if (com.dynamicCount == 0)                      // end of dynamic block
+        {
+            com.count_dy = com.commandVectorDynamic.size();
+            std::cout << "bulk: ";
+            PrintBlock(com.commandVectorDynamic, com.count_dy);
+            std::cout << std::endl;
+            com.commandVectorDynamic.clear();
+        }
+    }
+}
+
+int main(int, char **)
+{
+    Command com;
+    std::string text;
     while (std::getline(std::cin, text))
     {
-
-        if(!isActDyn)                                   // static block
-        {
-            if(!endStaticBlock(text))                   // text == "EOF" || text == "{"
-            {
-                commandVectorStatic.push_back(text);
-                count_st = commandVectorStatic.size();
-                if(count_st == max_size)
-                {
-                    std::cout << "bulk: ";
-                    PB(commandVectorStatic, count_st);
-                    std::cout << std::endl;
-                    commandVectorStatic.clear();
-                }
-            }
-            if(endStaticBlock(text))                    // text == "EOF" || text == "{"
-            {
-                count_st = commandVectorStatic.size();
-                std::cout << "bulk: ";
-                PB(commandVectorStatic, count_st);
-                std::cout << std::endl;
-                commandVectorStatic.clear();
-                if(text == "{")
-                {
-                    isActDyn = true;
-                    dynamicCount ++;
-                }
-            }
-        }
-        else                                            // dynamic block
-        {
-            if(text != "{" && text != "}")
-            {
-                commandVectorDynamic.push_back(text);
-            }
-            if(text == "{") dynamicCount ++;
-            if(text == "}") dynamicCount --;
-            if (dynamicCount == 0)                      // end of dynamic block
-            {
-                count_dy = commandVectorDynamic.size();
-                std::cout << "bulk: ";
-                PB(commandVectorDynamic, count_dy);
-                std::cout << std::endl;
-                commandVectorDynamic.clear();
-            }
-        }
-
+        RunBulk(com, text);
     }
     return 0;
 }
