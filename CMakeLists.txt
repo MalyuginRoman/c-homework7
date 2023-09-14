@@ -3,44 +3,44 @@ cmake_minimum_required(VERSION 3.10)
 set(PATCH_VERSION "1" CACHE INTERNAL "Patch version")
 set(PROJECT_VERSION 0.0.${PATCH_VERSION})
 
-project(Matrix VERSION ${PROJECT_VERSION})
+project(Bulk VERSION ${PROJECT_VERSION})
 
 configure_file(version.h.in version.h)
 
-add_executable(Matrix_cli main.cpp)
-add_library(Matrix lib.cpp)
+add_executable(Bulk_cli main.cpp)
+add_library(Bulk lib.cpp)
 
-set_target_properties(Matrix_cli Matrix PROPERTIES
+set_target_properties(Bulk_cli Bulk PROPERTIES
     CXX_STANDARD 14
     CXX_STANDARD_REQUIRED ON
 )
-target_include_directories(Matrix
+target_include_directories(Bulk
     PRIVATE "${CMAKE_BINARY_DIR}"
 )
 
-target_link_libraries(Matrix_cli PRIVATE
-    Matrix
+target_link_libraries(Bulk_cli PRIVATE
+    Bulk
 )
 
 if (MSVC)
-    target_compile_options(Matrix_cli PRIVATE
+    target_compile_options(Bulk_cli PRIVATE
         /W4  /WX
     )
-    target_compile_options(Matrix PRIVATE
+    target_compile_options(Bulk PRIVATE
         /W4  /WX
     )
 else ()
-    target_compile_options(Matrix_cli PRIVATE
+    target_compile_options(Bulk_cli PRIVATE
         -Wall -Wextra -pedantic -Werror
     )
-    target_compile_options(Matrix PRIVATE
+    target_compile_options(Bulk PRIVATE
         -Wall -Wextra -pedantic -Werror
     )
 endif()
 
 
 
-install(TARGETS Matrix_cli RUNTIME DESTINATION bin)
+install(TARGETS Bulk_cli RUNTIME DESTINATION bin)
 
 set(CPACK_GENERATOR DEB)
 
