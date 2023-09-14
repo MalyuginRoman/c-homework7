@@ -13,7 +13,7 @@ bool endStaticBlock(std::string text) // end static block
 }
 void PrintBlock(std::vector<std::string> vector, size_t count)
 {
-    for(int i = 0; i < count; ++i)
+    for(size_t i = 0; i < count; ++i)
     {
         std::cout << vector[i];
         if (i < count - 1) std::cout << ", ";
@@ -25,7 +25,7 @@ struct Command {
     std::vector<std::string> commandVectorDynamic;
     size_t count_st = 0;
     size_t count_dy = 0;
-    int max_size = 3;
+    size_t max_size = 3;
     int dynamicCount = 0;
     bool isActDyn = false;
 };
