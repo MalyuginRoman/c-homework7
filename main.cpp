@@ -6,146 +6,135 @@
 #include <vector>
 #include <chrono>
 
-struct Command {
-    std::vector<std::string> commandVectorStatic;
-    std::vector<std::string> commandVectorDynamic;
-    size_t count_st = 0;
-    size_t count_dy = 0;
-    size_t max_size = 3;
-    int dynamicCount = 0;
+#include "MyList.h"
+
+namespace command
+{
+    struct command_block
+    {
+        std::vector<std::string> command;
+        size_t count = 0;
+        std::string file_name;
+    };
+
     bool isActDyn = false;
-    std::string st_file;
-    std::string dy_file;
     std::chrono::system_clock::time_point file_time;
-};
+    int dynamicCount = 0;
+    size_t max_size = 3;
 
-bool endStaticBlock(std::string text) // end static block
-{
-    if(text == "EOF" || text == "{")
-        return true;
-    else
-        return false;
-}
-void PrintBlock(std::vector<std::string> vector, size_t count)
-{
-    std::cout << "bulk: ";
-    for(size_t i = 0; i < count; ++i)
+    bool endStaticBlock(std::string text) // end static block
     {
-        std::cout << vector[i];
-        if (i < count - 1) std::cout << ", ";
-        sleep(1);
+        if(text == "EOF" || text == "{")
+            return true;
+        else
+            return false;
     }
-    std::cout << std::endl;
-}
 
-void SaveFile(Command &com, bool isUse)
-{
-    std::vector<std::string> vector;
-    std::string name;
-    size_t count;
-    if(isUse) {
-        name = com.st_file;
-        count = com.count_st;
-        vector = com.commandVectorStatic;
-    }
-    else {
-        name = com.dy_file;
-        count = com.count_dy;
-        vector = com.commandVectorDynamic;
-    }
-    PrintBlock(vector, count);
-    std::ofstream out;
-    out.open(name);
-    if(out.is_open()) {
-        for(size_t i = 0; i < count; ++i)
+    void PrintBlock(command_block vector)
+    {
+        std::cout << "bulk: ";
+        for(size_t i = 0; i < vector.count; ++i)
         {
-            out << vector[i];
-            if (i < count - 1) out << ", ";
+            std::cout << vector.command[i];
+            if (i < vector.count - 1) std::cout << ", ";
+            Sleep(1000);
         }
-        out.close();
+        std::cout << std::endl;
     }
-    else
-        std::cout << "File is not open" << std::endl;
-}
 
-std::string GetFileName(Command &com)
-{
-    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
-    com.file_time.time_since_epoch()).count();
-    std::stringstream filename;
-    filename << "bulk" << seconds << ".log";
-    return filename.str();
-}
-
-void Synhronize(Command &com, bool isUse)
-{
-    if(isUse) {
-        com.commandVectorStatic.clear();
-        com.count_st = com.commandVectorStatic.size();
-    }
-    else {
-        com.commandVectorDynamic.clear();
-        com.count_dy = com.commandVectorStatic.size();
-    }
-}
-
-void RunBulk(Command &com, std::string text)
-{
-    if(!com.isActDyn)                                   // static block
+    void SaveFile(command_block vector)
     {
-        if(!endStaticBlock(text))                   // text != "EOF" || text != "{"
-        {
-            if (!com.count_st)
-                com.st_file = GetFileName(com);
-            com.commandVectorStatic.push_back(text);
-            com.count_st = com.commandVectorStatic.size();
-            if(com.count_st == com.max_size)
+        PrintBlock(vector);
+        std::ofstream out;
+        out.open(vector.file_name);
+        if(out.is_open()) {
+            for(size_t i = 0; i < vector.count; ++i)
             {
-                SaveFile(com, true);
-                Synhronize(com, true);
+                out << vector.command[i];
+                if (i < vector.count - 1) out << ", ";
+            }
+            out.close();
+        }
+        else
+            std::cout << "File is not open" << std::endl;
+    }
+
+    std::string GetFileName()
+    {
+        auto seconds = std::chrono::duration_cast<std::chrono::seconds>
+        (file_time.time_since_epoch()).count();
+        std::stringstream filename;
+        filename << "bulk" << seconds << ".log";
+        return filename.str();
+    }
+
+    void Synhronize(command_block &vector)
+    {
+        vector.command.clear();
+        vector.count = vector.command.size();
+    }
+
+    void RunBulk()
+    {
+        std::string text;
+        command_block static_block;
+        command_block dynamic_block;
+        while (std::getline(std::cin, text))
+        {
+            file_time = std::chrono::system_clock::now();
+            if(!isActDyn)                                   // static block
+            {
+                if(!endStaticBlock(text))                   // text != "EOF" || text != "{"
+                {
+                    if (!static_block.count)
+                        static_block.file_name = GetFileName();
+                    static_block.command.push_back(text);
+                    static_block.count = static_block.command.size();
+                    if(static_block.count == max_size)
+                    {
+                        SaveFile(static_block);
+                        Synhronize(static_block);
+                    }
+                }
+                if(endStaticBlock(text))                    // text == "EOF" || text == "{"
+                {
+                    static_block.count = static_block.command.size();
+                    if(static_block.count)
+                        SaveFile(static_block);
+                    Synhronize(static_block);
+                    if(text == "{")
+                    {
+                        isActDyn = true;
+                        dynamicCount ++;
+                    }
+                }
+            }
+            else                                            // dynamic block
+            {
+                if(text != "{" && text != "}" && text != "EOF")
+                {
+                    if (!dynamic_block.count)
+                        dynamic_block.file_name = GetFileName();
+                    dynamic_block.command.push_back(text);
+                    dynamic_block.count = dynamic_block.command.size();
+                }
+                if(text == "{") dynamicCount ++;
+                if(text == "}") dynamicCount --;
+                if(text == "EOF")
+                    dynamic_block.command.clear();
+                if (dynamicCount == 0)                      // end of dynamic block
+                {
+                    SaveFile(dynamic_block);
+                    Synhronize(dynamic_block);
+                    isActDyn = false;
+                }
             }
         }
-        if(endStaticBlock(text))                    // text == "EOF" || text == "{"
-        {
-            com.count_st = com.commandVectorStatic.size();
-            if(com.count_st)
-                SaveFile(com, true);
-            Synhronize(com, true);
-            if(text == "{")
-            {
-                com.isActDyn = true;
-                com.dynamicCount ++;
-            }
-        }
-    }
-    else                                            // dynamic block
-    {
-        if(text != "{" && text != "}" && text != "EOF")
-        {
-            if (!com.count_dy)
-                com.dy_file = GetFileName(com);
-            com.commandVectorDynamic.push_back(text);
-            com.count_dy = com.commandVectorDynamic.size();
-        }
-        if(text == "{") com.dynamicCount ++;
-        if(text == "}") com.dynamicCount --;
-        if(text == "EOF")
-            com.commandVectorDynamic.clear();
-        if (com.dynamicCount == 0)                      // end of dynamic block
-        {
-            SaveFile(com, false);
-            Synhronize(com, false);
-        }
     }
 }
 
-int main(int, char **)
+int main()
 {
-    Command com;
-    std::string text;
-    while (std::getline(std::cin, text))
-    {
-        com.file_time = std::chrono::system_clock::now();
-        RunBulk(com, text);
-    }
+    command::RunBulk();
+    return 0;
 }
