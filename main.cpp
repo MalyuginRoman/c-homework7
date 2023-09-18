@@ -6,6 +6,8 @@
 #include <vector>
 #include <chrono>
 
+#include "lib.h"
+
 namespace command
 {
     struct command_block
@@ -35,7 +37,7 @@ namespace command
         {
             std::cout << vector.command[i];
             if (i < vector.count - 1) std::cout << ", ";
-            Sleep(1000);
+            sleep(1);
         }
         std::cout << std::endl;
     }
